@@ -1,22 +1,32 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormControl, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 
 import { Customer } from './customer';
 import { ratingRange } from './validations/customer.validation.range';
 import { matchPasswordRange } from './validations/customer.validation.match';
 
+import {errorMessageService} from './services/errorMessageService';
+
+import 'rxjs/add/operator/debounceTime';
+import { Observable } from 'rxjs/Observable';
 
 
 @Component({
     selector: 'my-signup',
-    templateUrl: './app/customers/customer.component.html'
+    templateUrl: './app/customers/customer.component.html',
+    providers: [errorMessageService]
 })
 export class CustomerComponent implements OnInit  {
     private customerForm : FormGroup;
     private customer: Customer= new Customer();
 
+    private emailMessage: string;
+    private firstNameMessage: string;
+    private lastNameMessage: string;
 
-    constructor(private fb: FormBuilder) {}
+    private errorMessages: JSON;
+
+    constructor(private fb: FormBuilder, private _errorMessageService: errorMessageService) {}
 
     public ngOnInit(): void{
 
@@ -33,14 +43,31 @@ export class CustomerComponent implements OnInit  {
             sendCatalog: true
         });
 
-        this.customerForm.patchValue({
-            email: 'john.reed@mail.com',
-            phone: '+3333452199',
-            sendCatalog: true
-        });
+        this._errorMessageService.load().subscribe((data : JSON) => {
+            this.errorMessages = data
+        },
+        error => {});
+
+        this.setWatchers();
+
     }
 
-    private save(): void {
+    private setWatchers() : void {
+        this.customerForm.get('notification').valueChanges.subscribe(value => {
+           this.setNotification(value);    
+        });
+
+        this.customerForm.get('emailGroup.email').valueChanges.debounceTime(1000).subscribe(value => {
+            this.setMessage(this.customerForm.get('emailGroup.email'), 'emailGroup.email', 'emailMessage')
+        });
+
+        this.customerForm.get('firstName').valueChanges.subscribe(value => {
+            this.setMessage(this.customerForm.get('firstName'), 'firstName', 'firstNameMessage')
+        });
+
+        this.customerForm.get('lastName').valueChanges.subscribe(value => {
+            this.setMessage(this.customerForm.get('lastName'), 'lastName', 'lastNameMessage')
+        });
     }
 
     private setNotification(type: string): void {
@@ -53,5 +80,17 @@ export class CustomerComponent implements OnInit  {
             phoneControl.clearValidators();
         }
         phoneControl.updateValueAndValidity();
+    }
+
+
+    private setMessage(c: AbstractControl, controlName: string, errorProperty : string ) : void {
+        this[errorProperty] = '';
+        if((c.touched || c.dirty) && c.errors ){
+           this[errorProperty] = Object.keys(c.errors).map(key => this.errorMessages[controlName][key]).join(' ');
+        }
+    }
+
+    private save() : void {
+
     }
  }

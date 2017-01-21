@@ -1,0 +1,13 @@
+{
+    "emailGroup.email": {
+        "required": "Please enter your email", 
+        "pattern": "Please enter a valid email address"
+    },
+    "firstName": {
+        "required": "Please enter your first name",
+        "minlength": "The first name must be longer than 3 characters"
+    },
+    "lastName": {
+        "required" : "Please enter your last name"
+    }
+}
