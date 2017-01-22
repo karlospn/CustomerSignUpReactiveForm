@@ -9,5 +9,8 @@
     },
     "lastName": {
         "required" : "Please enter your last name"
+    },
+    "rating": {
+        "range": "Please rate your experience from 1 to 10"
     }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl, FormBuilder, Validators, AbstractControl } from '@angular/forms';
+import { FormGroup, FormControl, FormBuilder, Validators, AbstractControl, FormArray } from '@angular/forms';
 
 import { Customer } from './customer';
 import { ratingRange } from './validations/customer.validation.range';
@@ -23,8 +23,12 @@ export class CustomerComponent implements OnInit  {
     private emailMessage: string;
     private firstNameMessage: string;
     private lastNameMessage: string;
+    private ratingMessage: string;
 
     private errorMessages: JSON;
+    get addressFormArray(): FormArray {
+        return <FormArray>this.customerForm.get('addressFormArray');
+    }
 
     constructor(private fb: FormBuilder, private _errorMessageService: errorMessageService) {}
 
@@ -40,7 +44,10 @@ export class CustomerComponent implements OnInit  {
             phone : [''],
             notification: ['email'],
             rating: [5, ratingRange(1, 10)],
-            sendCatalog: true
+            sendCatalog: false,
+            addressFormArray : this.fb.array([
+               this.buildAdress() 
+            ]) 
         });
 
         this._errorMessageService.load().subscribe((data : JSON) => {
@@ -68,6 +75,10 @@ export class CustomerComponent implements OnInit  {
         this.customerForm.get('lastName').valueChanges.subscribe(value => {
             this.setMessage(this.customerForm.get('lastName'), 'lastName', 'lastNameMessage')
         });
+
+        this.customerForm.get('rating').valueChanges.subscribe(value => {
+            this.setMessage(this.customerForm.get('rating'), 'rating', 'ratingMessage')
+        });
     }
 
     private setNotification(type: string): void {
@@ -88,6 +99,22 @@ export class CustomerComponent implements OnInit  {
         if((c.touched || c.dirty) && c.errors ){
            this[errorProperty] = Object.keys(c.errors).map(key => this.errorMessages[controlName][key]).join(' ');
         }
+    }
+
+
+    private buildAdress(): FormGroup {
+        return  this.fb.group({
+                addressType : ['home'],
+                street1 : ['', Validators.required],
+                street2 : '',
+                city: ['', Validators.required],
+                state: ['', Validators.required],
+                zip: ['', Validators.required]
+            })
+    }
+
+    private addAddress() : void {
+        this.addressFormArray.push(this.buildAdress());
     }
 
     private save() : void {
